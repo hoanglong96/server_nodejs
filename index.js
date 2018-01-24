@@ -2,8 +2,13 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var Diacritics = require('diacritic');
+
+//import model
 var Food = require('./models/food');
 var User = require('./models/user');
+var UserInfo = require('./models/userInfo');
+var NewsFeed = require('./models/newsfeed');
+
 var app = express();
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://hoanglong96:hoanglong96@ds111618.mlab.com:11618/hoanglongdb'
@@ -11,10 +16,10 @@ mongoose.connect('mongodb://hoanglong96:hoanglong96@ds111618.mlab.com:11618/hoan
 
 
 
-
+//Set port 
 app.set('port', (process.env.PORT || 5000));
 
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(__dirname + '/public')); 
 app.use(bodyParser.json());
 
 // views is directory for all template files
@@ -29,6 +34,78 @@ app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
 
+
+//Create User
+app.post('/create_user', function(req, res){
+  var body = req.body;
+
+    User.findOne({'idFb':body.idFb}, function (err, user) {
+      if(err){
+            res.json({"success":0, "message": "Could not add record: "+err});
+      }else{
+        if(user){
+          // Update each attribute with any possible attribute that may have been submitted in the body of the request
+          // If that attribute isn't in the request body, default back to whatever it was before.
+
+          // user.idFb = req.body.idFb || user.idFb;
+          user.avaFb = req.body.avatar || user.avatar;
+          user.nameFb = req.body.fullname || user.fullname;
+         
+          // Save the updated document back to the database
+          user.save(function (err, user) {
+              if(err){
+                  res.json({"success":0, "message": "Could not update record: "+err});
+              }else {
+                  res.json(user);
+              }
+          });
+        }else{
+              // var idValue = body.id;
+              var idValue = body.idFb;
+              var avaValue = body.avatar;
+              var nameValue = body.fullname;
+              var numFollowValue = body.numFollow;
+              var userFollowValue = body.userFollow;
+              var dateValue = body.date;
+              var listNewsValue = body.listNews;            
+
+              var user = new User({
+                  // id:idValue,
+                  idFb: idValue,
+                  avatar: avaValue,
+                  fullname: nameValue,
+                  numFollowValue: numFollowValue,
+                  userFollow: userFollowValue,
+                  date: rateNumValue,
+                  listNews: listNewsValue
+                });
+                user.save(function(err, createdUser){
+                    if(err){
+                        res.json({"success":0, "message": "Could not add record: "+err});
+                    }else {
+                        res.json(createdUser);
+                    }
+                  }
+                );
+        }
+      }
+    });
+});
+
+//Get All User
+
+app.get('/get_all_user', function(req, res){
+  UserInfo.find(function(err, users){
+    if(err){
+      res.json({success: 0, message: "Could not get data from mlab"});
+    }else {
+      // res.json(foods);
+      res.send(users);
+    }
+  });
+});
+
+//Search
 app.post('/searching', function(req, res){
   var body = req.body;
   var keySearchFormat = Diacritics.clean(body.keySearch.toLowerCase());
@@ -49,7 +126,7 @@ app.post('/searching', function(req, res){
   });
 });
 
-
+//Create Food
 app.post('/createFood', function(req, res){
   var body = req.body;
 
@@ -95,6 +172,8 @@ app.post('/createFood', function(req, res){
     }
   );
 });
+
+//Get Food
 app.get('/getFood', function(req, res){
   Food.find(function(err, foods){
     if(err){
@@ -105,6 +184,9 @@ app.get('/getFood', function(req, res){
     }
   });
 });
+
+
+//GetTopFood
 app.get('/getTopFood', function(req, res){
   var mysort = { rating: -1 };
   Food.find().sort(mysort).exec(function(err, result){
@@ -115,6 +197,9 @@ app.get('/getTopFood', function(req, res){
     }
   });
 });
+
+
+//UpdateFood
 app.put('/updateFood/:foodId', function(req, res){
   Food.findById(req.params.foodId, function (err, food) {
   // Handle any possible database errors
@@ -149,6 +234,8 @@ app.put('/updateFood/:foodId', function(req, res){
     }
   });
 });
+
+//Delete Food
 app.delete('/deleteFood/:foodId', function(req, res){
     var foodId = req.params.foodId;
 
@@ -160,6 +247,8 @@ app.delete('/deleteFood/:foodId', function(req, res){
       }
     });
 });
+
+//GetFood by type
 app.get('/getFoodByType/:typeFood', function(req, res){
   var typeFood = req.params.typeFood;
   Food.find({'type':typeFood}, function(err, foods){
@@ -172,6 +261,8 @@ app.get('/getFoodByType/:typeFood', function(req, res){
   });
 });
 
+
+//GetFood by id
 app.get('/getFoodById/:idFood', function(req, res){
   var idFood = req.params.idFood;
   Food.findById(idFood, function (err, food) {
@@ -184,6 +275,7 @@ app.get('/getFoodById/:idFood', function(req, res){
   });
 });
 
+//GetFood by user
 app.get('/getFoodByUser/:userId', function(req, res){
   var userId = req.params.userId;
   Food.find({'author':userId}, function(err, foods){
@@ -196,32 +288,7 @@ app.get('/getFoodByUser/:userId', function(req, res){
   });
 });
 
-// app.get('/getFoodFavorite/:userId', function(req, res) {
-//     User.findOne({'idFb':req.params.userId}, function (err, userFound) {
-//         if(err){
-//             res.json({success: 0, message: "Could not get data from mlab"});
-//         }else {
-//             var foodsReturn = [];
-//             var listFavoriteValue = userFound.listFavorite;
-//             listFavoriteValue.forEach(function(value){
-//                 Food.findById(value, function (err, food) {
-//                     if (err) {
-//                         res.json({success: 0, message: "Could not get data from mlab"});
-//                     } else {
-//                         foodsReturn.push(food);
-//                         console.log("FindById: " + foodsReturn);
-//                     }
-//                 });
-//                 console.log("Foreach: "+foodsReturn);
-//             });
-//             console.log("Return"+foodsReturn);
-//             res.send({food:foodsReturn});
-//         }
-//     });
-// });
-
-
-
+//GetFavorite Food
 app.get('/getFoodFavorite/:userId', function(req, res) {
 
     User.findOne({'idFb':req.params.userId}).populate('listFavorite').exec(function(err, userFound) {
@@ -234,70 +301,71 @@ app.get('/getFoodFavorite/:userId', function(req, res) {
     });
 });
 
-app.post('/createUser', function(req, res){
-  var body = req.body;
+// //Create User
+// app.post('/createUser', function(req, res){
+//   var body = req.body;
 
-    User.findOne({'idFb':body.idFb}, function (err, user) {
-      if(err){
-            res.json({"success":0, "message": "Could not add record: "+err});
-      }else{
-        if(user){
-          // Update each attribute with any possible attribute that may have been submitted in the body of the request
-          // If that attribute isn't in the request body, default back to whatever it was before.
+//     User.findOne({'idFb':body.idFb}, function (err, user) {
+//       if(err){
+//             res.json({"success":0, "message": "Could not add record: "+err});
+//       }else{
+//         if(user){
+//           // Update each attribute with any possible attribute that may have been submitted in the body of the request
+//           // If that attribute isn't in the request body, default back to whatever it was before.
 
-          // user.idFb = req.body.idFb || user.idFb;
-          user.avaFb = req.body.avaFb || user.avaFb;
-          user.nameFb = req.body.nameFb || user.nameFb;
-          user.emailFb = req.body.emailFb || user.emailFb;
-          user.ratePoint = req.body.ratePoint || user.ratePoint;
-          user.rateNum = req.body.rateNum || user.rateNum;
-          user.listSub = req.body.listSub || user.listSub;
-          user.listFavorite = req.body.listFavorite || user.listFavorite;
+//           // user.idFb = req.body.idFb || user.idFb;
+//           user.avaFb = req.body.avaFb || user.avaFb;
+//           user.nameFb = req.body.nameFb || user.nameFb;
+//           user.emailFb = req.body.emailFb || user.emailFb;
+//           user.ratePoint = req.body.ratePoint || user.ratePoint;
+//           user.rateNum = req.body.rateNum || user.rateNum;
+//           user.listSub = req.body.listSub || user.listSub;
+//           user.listFavorite = req.body.listFavorite || user.listFavorite;
 
-          // Save the updated document back to the database
-          user.save(function (err, user) {
-              if(err){
-                  res.json({"success":0, "message": "Could not update record: "+err});
-              }else {
-                  res.json(user);
-              }
-          });
-        }else{
-            // var idValue = body.id;
-            var idValue = body.idFb;
-            var avaValue = body.avaFb;
-            var nameValue=body.nameFb;
-            var emailValue = body.emailFb;
-            var ratePointValue = body.ratePoint;
-            var rateNumValue = body.rateNum;
-            var listSubValue = body.listSub;
-            var listFavoriteValue = body.listFavorite;
-              var user = new User({
-                  // id:idValue,
-                  idFb: idValue,
-                  avaFb: avaValue,
-                  nameFb: nameValue,
-                  emailFb: emailValue,
-                  ratePoint: ratePointValue,
-                  rateNum: rateNumValue,
-                  listSub: listSubValue,
-                  listFavorite: listFavoriteValue
-                });
-                user.save(function(err, createdUser){
-                    if(err){
-                        res.json({"success":0, "message": "Could not add record: "+err});
-                    }else {
-                        res.json(createdUser);
-                    }
-                  }
-                );
-        }
-      }
-    });
+//           // Save the updated document back to the database
+//           user.save(function (err, user) {
+//               if(err){
+//                   res.json({"success":0, "message": "Could not update record: "+err});
+//               }else {
+//                   res.json(user);
+//               }
+//           });
+//         }else{
+//             // var idValue = body.id;
+//             var idValue = body.idFb;
+//             var avaValue = body.avaFb;
+//             var nameValue=body.nameFb;
+//             var emailValue = body.emailFb;
+//             var ratePointValue = body.ratePoint;
+//             var rateNumValue = body.rateNum;
+//             var listSubValue = body.listSub;
+//             var listFavoriteValue = body.listFavorite;
+//               var user = new User({
+//                   // id:idValue,
+//                   idFb: idValue,
+//                   avaFb: avaValue,
+//                   nameFb: nameValue,
+//                   emailFb: emailValue,
+//                   ratePoint: ratePointValue,
+//                   rateNum: rateNumValue,
+//                   listSub: listSubValue,
+//                   listFavorite: listFavoriteValue
+//                 });
+//                 user.save(function(err, createdUser){
+//                     if(err){
+//                         res.json({"success":0, "message": "Could not add record: "+err});
+//                     }else {
+//                         res.json(createdUser);
+//                     }
+//                   }
+//                 );
+//         }
+//       }
+//     });
+// });
 
+//Get All User
 
-
-});
 app.get('/getAllUser', function(req, res){
   User.find(function(err, users){
     if(err){
@@ -308,6 +376,8 @@ app.get('/getAllUser', function(req, res){
     }
   });
 });
+
+//GetProfile User
 app.get('/getUserProfile/:userId', function(req, res){
   User.findOne({'idFb':req.params.userId}, function (err, user) {
   // User.findById(req.params.userId,function(err, user){
@@ -319,6 +389,8 @@ app.get('/getUserProfile/:userId', function(req, res){
     }
   });
 });
+
+//Update User
 app.put('/updateUser/:userId', function(req, res){
   // User.findById(req.params.userId, function (err, user) {
     User.findOne({'idFb':req.params.userId}, function (err, user) {
