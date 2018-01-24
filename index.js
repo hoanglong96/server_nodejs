@@ -6,7 +6,7 @@ var Food = require('./models/food');
 var User = require('./models/user');
 var app = express();
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://admin:admin@ds161209.mlab.com:61209/cookmix_listfood'
+mongoose.connect('mongodb://hoanglong96:hoanglong96@ds111618.mlab.com:11618/hoanglongdb'
 , {useMongoClient: true});
 
 
