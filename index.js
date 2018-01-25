@@ -1,3 +1,5 @@
+import { log } from 'util';
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
@@ -47,8 +49,6 @@ app.post('/create_user', function(req, res){
           // If that attribute isn't in the request body, default back to whatever it was before.
 
           // user.idFb = req.body.idFb || user.idFb;
-          user.avaFb = req.body.avatar || user.avatar;
-          user.nameFb = req.body.fullname || user.fullname;
          
           // Save the updated document back to the database
           user.save(function (err, user) {
@@ -56,6 +56,7 @@ app.post('/create_user', function(req, res){
                   res.json({"success":0, "message": "Could not update record: "+err});
               }else {
                   res.json(user);
+                  console.log("co user roi")
               }
           });
         }else{
