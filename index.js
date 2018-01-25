@@ -39,7 +39,7 @@ app.listen(app.get('port'), function() {
 app.post('/create_user', function(req, res){
   var body = req.body;
 
-    User.findOne({'idFb':body.idFb}, function (err, user) {
+    UserInfo.findOne({'idFb':body.idFb}, function (err, user) {
       if(err){
             res.json({"success":0, "message": "Could not add record: "+err});
       }else{
@@ -69,14 +69,14 @@ app.post('/create_user', function(req, res){
               var dateValue = body.date;
               var listNewsValue = body.listNews;            
 
-              var user = new User({
+              var user = new UserInfo({
                   // id:idValue,
                   idFb: idValue,
                   avatar: avaValue,
                   fullname: nameValue,
-                  numFollowValue: numFollowValue,
+                  numFollow: numFollowValue,
                   userFollow: userFollowValue,
-                  date: rateNumValue,
+                  date: dateValue,
                   listNews: listNewsValue
                 });
                 user.save(function(err, createdUser){
