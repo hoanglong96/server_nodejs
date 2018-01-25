@@ -34,7 +34,6 @@ app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
 
-
 //Create User
 app.post('/create_user', function(req, res){
   var body = req.body;
@@ -93,7 +92,6 @@ app.post('/create_user', function(req, res){
 });
 
 //Get All User
-
 app.get('/get_all_user', function(req, res){
   UserInfo.find(function(err, users){
     if(err){
@@ -101,6 +99,47 @@ app.get('/get_all_user', function(req, res){
     }else {
       // res.json(foods);
       res.send(users);
+    }
+  });
+});
+
+//GetProfile User
+app.get('/getUserProfile/:userId', function(req, res){
+  UserInfo.findOne({'idFb':req.params.userId}, function (err, user) {
+    if(err){
+      res.json({success: 0, message: "Could not get data from mlab"});
+    }else {
+      res.send(user);
+    }
+  });
+});
+
+//Update User
+app.put('/updateUser/:userId', function(req, res){
+  // User.findById(req.params.userId, function (err, user) {
+    UserInfo.findOne({'idFb':req.params.userId}, function (err, user) {
+  // Handle any possible database errors
+    if (err) {
+        res.status(500).send(err);
+    } else {
+        // Update each attribute with any possible attribute that may have been submitted in the body of the request
+        // If that attribute isn't in the request body, default back to whatever it was before.
+
+        // user.idFb = req.body.idFb || user.idFb;
+        user.avatar = req.body.avatar || user.avatar;
+        user.fullname = req.body.fullname || user.fullname;
+        user.userFollow = req.body.userFollow || user.userFollow;
+        user.listNews = req.body.listNews || user.listNews;
+        user.userFollow = req.body.userFollow || user.userFollow;
+        
+        // Save the updated document back to the database
+        user.save(function (err, user) {
+            if (err) {
+                res.status(500).send(err)
+            }else {
+              res.send(user);
+            }
+        });
     }
   });
 });
@@ -299,125 +338,4 @@ app.get('/getFoodFavorite/:userId', function(req, res) {
       else
         res.send({food:userFound.listFavorite});
     });
-});
-
-// //Create User
-// app.post('/createUser', function(req, res){
-//   var body = req.body;
-
-//     User.findOne({'idFb':body.idFb}, function (err, user) {
-//       if(err){
-//             res.json({"success":0, "message": "Could not add record: "+err});
-//       }else{
-//         if(user){
-//           // Update each attribute with any possible attribute that may have been submitted in the body of the request
-//           // If that attribute isn't in the request body, default back to whatever it was before.
-
-//           // user.idFb = req.body.idFb || user.idFb;
-//           user.avaFb = req.body.avaFb || user.avaFb;
-//           user.nameFb = req.body.nameFb || user.nameFb;
-//           user.emailFb = req.body.emailFb || user.emailFb;
-//           user.ratePoint = req.body.ratePoint || user.ratePoint;
-//           user.rateNum = req.body.rateNum || user.rateNum;
-//           user.listSub = req.body.listSub || user.listSub;
-//           user.listFavorite = req.body.listFavorite || user.listFavorite;
-
-//           // Save the updated document back to the database
-//           user.save(function (err, user) {
-//               if(err){
-//                   res.json({"success":0, "message": "Could not update record: "+err});
-//               }else {
-//                   res.json(user);
-//               }
-//           });
-//         }else{
-//             // var idValue = body.id;
-//             var idValue = body.idFb;
-//             var avaValue = body.avaFb;
-//             var nameValue=body.nameFb;
-//             var emailValue = body.emailFb;
-//             var ratePointValue = body.ratePoint;
-//             var rateNumValue = body.rateNum;
-//             var listSubValue = body.listSub;
-//             var listFavoriteValue = body.listFavorite;
-//               var user = new User({
-//                   // id:idValue,
-//                   idFb: idValue,
-//                   avaFb: avaValue,
-//                   nameFb: nameValue,
-//                   emailFb: emailValue,
-//                   ratePoint: ratePointValue,
-//                   rateNum: rateNumValue,
-//                   listSub: listSubValue,
-//                   listFavorite: listFavoriteValue
-//                 });
-//                 user.save(function(err, createdUser){
-//                     if(err){
-//                         res.json({"success":0, "message": "Could not add record: "+err});
-//                     }else {
-//                         res.json(createdUser);
-//                     }
-//                   }
-//                 );
-//         }
-//       }
-//     });
-// });
-
-//Get All User
-
-app.get('/getAllUser', function(req, res){
-  User.find(function(err, users){
-    if(err){
-      res.json({success: 0, message: "Could not get data from mlab"});
-    }else {
-      // res.json(foods);
-      res.send(users);
-    }
-  });
-});
-
-//GetProfile User
-app.get('/getUserProfile/:userId', function(req, res){
-  User.findOne({'idFb':req.params.userId}, function (err, user) {
-  // User.findById(req.params.userId,function(err, user){
-    if(err){
-      res.json({success: 0, message: "Could not get data from mlab"});
-    }else {
-      // res.json(foods);
-      res.send(user);
-    }
-  });
-});
-
-//Update User
-app.put('/updateUser/:userId', function(req, res){
-  // User.findById(req.params.userId, function (err, user) {
-    User.findOne({'idFb':req.params.userId}, function (err, user) {
-  // Handle any possible database errors
-    if (err) {
-        res.status(500).send(err);
-    } else {
-        // Update each attribute with any possible attribute that may have been submitted in the body of the request
-        // If that attribute isn't in the request body, default back to whatever it was before.
-
-        // user.idFb = req.body.idFb || user.idFb;
-        user.avaFb = req.body.avaFb || user.avaFb;
-        user.nameFb = req.body.nameFb || user.nameFb;
-        user.emailFb = req.body.emailFb || user.emailFb;
-        user.ratePoint = req.body.ratePoint || user.ratePoint;
-        user.rateNum = req.body.rateNum || user.rateNum;
-        user.listSub =req.body.listSub || user.listSub;
-        user.listFavorite = req.body.listFavorite || user.listFavorite;
-
-        // Save the updated document back to the database
-        user.save(function (err, user) {
-            if (err) {
-                res.status(500).send(err)
-            }else {
-              res.send(user);
-            }
-        });
-    }
-  });
 });
