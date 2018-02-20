@@ -141,7 +141,7 @@ app.get('/getAllNhomTu', function (req, res) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
-      res.send(nhomTus);
+      res.send({NhomTu: nhomTus});
     }
   });
 });
