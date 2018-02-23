@@ -10,6 +10,7 @@ var UserInfo = require('./models/userInfo');
 var NewsFeed = require('./models/newsfeed');
 var NhomTu = require('./models/nhomTu');
 var TuTrongNhomTu = require('./models/TuVung')
+var MeoToeic = require('./models/meoToeic')
 
 var arrWord = new Array();
 var arrNghia = new Array();
@@ -18,8 +19,6 @@ var app = express();
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://hoanglong96:hoanglong96@ds111618.mlab.com:11618/hoanglongdb'
   , { useMongoClient: true });
-
-
 
 //Set port 
 app.set('port', (process.env.PORT || 5000));
@@ -31,75 +30,267 @@ app.use(bodyParser.json());
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
-// app.get('/', function(request, response) {
-//   response.render('pages/index');
-// });
 
 app.listen(app.get('port'), function () {
   console.log('Node app is running on port', app.get('port'));
 });
 
-// var lineReader = require('readline').createInterface({
-//   input: require('fs').createReadStream('file.in'),
-//   crlfDelay: Infinity
-// });
-
-// lineReader.on('line', function (line) {
-//   console.log(line);
-// });
-
 var fs = require('fs');
 var array = fs.readFileSync('file.in').toString().split("\n");
 
-var request = require('request');  
+var request = require('request');
 var cheerio = require('cheerio');
 
-var url = 'https://www.memrise.com/course/1189785/tu-vung-toeic-quan-trong-cap-1/';
-
-request(url, function(err, response, body){  
+//crawl nhom tu vung
+var urlNhomTuVung = "http://600tuvungtoeic.com/";
+request(urlNhomTuVung, function (err, response, body) {
   if (!err && response.statusCode == 200) {
     var $ = cheerio.load(body);
-    console.log($('.col_a col text').text());
+
+    var arrImage = new Array()
+    var arrContent = new Array()
+    var arrLink = new Array()
+    var idNhomTu = 0;
+
+    var title = $('.overlay a').each(function (i, elem) {
+      var link = "http://600tuvungtoeic.com/" + $(this).attr('href')
+      // request(link,function(er,response,body){
+      //   if(!err && response.statusCode == 200){
+      //     var $ = cheerio.load(body);
+      //     var hinhanh = $('.hinhanh img').each(function(i,elem){
+      //       var linkAnhTuVung = $(this).attr('src')
+      //       console.log(linkAnhTuVung)
+      //     })
+      //   }
+      // })
+      arrLink.push(link)
+    })
+
+    console.log(arrLink)
+
+    var image = $('.gallery-item img').each(function (i, elem) {
+      var imagelink = $(this).attr('src')
+      arrImage.push(imagelink)
+    })
+
+    var content = $('.content-gallery h3').each(function (i, elem) {
+      var contentNhomTu = $(this).text()
+      arrContent.push(contentNhomTu)
+    })
+
+    for (var i = 0; i < arrImage.length; i++) {
+      var nhomTu = new NhomTu({
+        idNhomTu: i + 1,
+        tenNhomTu: arrContent[i],
+        anhMinhHoa: arrImage[i],
+      })
+
+      nhomTu.save(function (err, taoNhomTu) {
+        //console.log("save " + title)
+        if (err) {
+          console.log("error")
+        } else {
+          console.log("success")
+        }
+      })
+    }
+
+    var arrIdNhom = new Array();
+    for (var i = 0; i < arrLink.length; i++) {
+      arrIdNhom.push(index)
+    }
+
+    for (var index = 0; index < arrLink.length; index++) {
+      var urlLinkNhomTu = arrLink[index]
+      arrIdNhom.push(index)
+      request(urlLinkNhomTu, function (err, response, body) {
+        if (!err && response.statusCode == 200) {
+          var $ = cheerio.load(body);
+
+          var arrNoiDungTu = new Array();
+          var arrImageTu = new Array();
+          var arrAudio = new Array();
+
+          var hinhanhtu = $('.hinhanh img').each(function (i, elem) {
+            var imageTu = $(this).attr('src')
+            arrImageTu.push(imageTu)
+          })
+          var tu = $('.noidung').each(function (i, elem) {
+            var noidungTu = $(this).text()
+            arrNoiDungTu.push(noidungTu)
+          })
+
+          var audio = $('.noidung audio source').each(function (i, elem) {
+            var audioTu = $(this).attr('src')
+            arrAudio.push(audioTu)
+          })
+
+
+          for (var i = 0; i < arrAudio.length; i++) {
+            console.log(index)
+            var tuVung = new TuTrongNhomTu({
+              id: index * 12 + i + 1,
+              content: arrNoiDungTu[i],
+              idNhomTu: index + 1,
+              image: arrImageTu[i],
+              audio: arrAudio[i]
+            })
+
+            tuVung.save(function (err, taoTuVung) {
+              if (err) {
+                console.log("error" + err)
+              } else {
+                console.log("success")
+              }
+            })
+          }
+        } else {
+          console.log('error')
+        }
+      })
+    }
+
+
+  } else {
+    console.log('error')
+  }
+})
+
+
+//crawl data video ngu phap toeic
+var urlVideo = "https://www.youtube.com/watch?v=Iqs6PGoJzsQ&list=PL6B8DaHavsG1O4YagP4gY_bbrFI9zjMGz";
+request(urlVideo, function (err, response, body) {
+  if (!err && response.statusCode == 200) {
+    var $ = cheerio.load(body);
+
+  } else {
+    console.log('error')
+  }
+})
+
+//crawl data meo toeic
+var url = 'https://giasutoeic.com/meo-thi-toeic/';
+
+request(url, function (err, response, body) {
+  if (!err && response.statusCode == 200) {
+    var $ = cheerio.load(body);
+
+    var idMeoToeic = 1;
+    var titleMeoToeic;
+    var imageMeoToeic;
+    var desMeoToeic;
+
+    //crawl title
+    var title1 = $('.post-title').text().split("\n");
+    var title2 = new Array();
+    for (var i = 0; i < title1.length; i++) {
+      if (title1[i].length != 0) {
+        title2.push(title1[i])
+      }
+    }
+
+    //crawl desc
+    var des1 = $('.post-desc .post-brief-desc').text().split("\n");
+    var des2 = new Array();
+    for (var i = 0; i < des1.length; i++) {
+      if (des1[i].length != 0 && des1[i] !== "Đọc bài này" && des1[i].length != 1 && des1[i] !== " Đọc bài này") {
+        des2.push(des1[i])
+      }
+    }
+
+    //crawl image
+    var image2 = new Array();
+    var image1 = $('.post-image a img').each(function (i, elem) {
+      image2.push($(this).attr('data-cfsrc'))
+    })
+
+    for (var i = 0; i < $('.post-image').length; i++) {
+      var i1 = $('.post-image img').attr('data-cfsrc')
+    }
+
+    //post data
+    var length = $('.post-wrapper.clearfix').length;
+
+    for (var i = 0; i < length; i++) {
+
+      MeoToeic.findOne({ 'id': i + 1 }, function (err, meotoeic) {
+
+      })
+
+      var title = title2[i]
+      var link = ""
+      titleMeoToeic = title;
+      imageMeoToeic = "https://giasutoeic.com" + image2[i];
+      //console.log(imageMeoToeic)
+      desMeoToeic = des2[i];
+
+      var meoToeic = new MeoToeic({
+        id: i + 1,
+        name: titleMeoToeic,
+        des: desMeoToeic,
+        image: imageMeoToeic
+      })
+
+      // meoToeic.save(function(err,taoMeoToeic){
+      //   //console.log("save " + title)
+      //   if(err){
+      //     console.log("error")
+      //   }else{
+      //     console.log("success")
+      //   }
+      // })
+    }
   }
   else console.log('Error');
 })
 
+//get all meo
+app.get('/getMeoToeic', function (req, res) {
+  MeoToeic.find(function (err, meoToeic) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({ MeoToeic: meoToeic });
+    }
+  });
+});
+
 //post tu 
 app.post('/taoTu', function (req, res) {
 
-    for(i in array) {
-      if(i%2==0){
-        arrWord.push(array[i])
-      }else{i%2==1}{
-        arrNghia.push(array[i])
-      }
-
-        var idNhomTu1 = "1"
-        var idTu1 = i+""
-        var word1 = arrWord[i]
-        var nghia1 = arrNghia[i]
-
-        var TuVung = new TuTrongNhomTu({
-          idNhomTu: idNhomTu1,
-          idTu: idTu1,
-          word: word1,
-          nghia: nghia1
-        });
-
-        TuVung.save(function(err,taoTu){
-          if(err){
-            res.json({"success": 0,"message": "Could not add record: " + err})
-          }else{
-            res.json({taoTu})
-          }
-        })
+  for (i in array) {
+    if (i % 2 == 0) {
+      arrWord.push(array[i])
+    } else { i % 2 == 1 } {
+      arrNghia.push(array[i])
     }
+
+    var idNhomTu1 = "1"
+    var idTu1 = i + ""
+    var word1 = arrWord[i]
+    var nghia1 = arrNghia[i]
+
+    var TuVung = new TuTrongNhomTu({
+      idNhomTu: idNhomTu1,
+      idTu: idTu1,
+      word: word1,
+      nghia: nghia1
+    });
+
+    TuVung.save(function (err, taoTu) {
+      if (err) {
+        res.json({ "success": 0, "message": "Could not add record: " + err })
+      } else {
+        res.json({ taoTu })
+      }
+    })
+  }
 })
 
 //Post nhóm từ
 app.post('/create_words', function (req, res) {
   var body = req.body;
-  NhomTu.findOne({'idNhomTu' : body.idNhomTu}, function (err, nhomTu) {
+  NhomTu.findOne({ 'idNhomTu': body.idNhomTu }, function (err, nhomTu) {
     if (err) {
       res.json({ "success": 0, "message": "Could not add record: " + err });
     } else {
@@ -108,10 +299,10 @@ app.post('/create_words', function (req, res) {
           if (err) {
             res.json({ "success": 0, "message": "Could not update record: " + err });
           } else {
-            res.json({nhomTu})
+            res.json({ nhomTu })
           }
         });
-      }else{
+      } else {
         var idNhomTu1 = body.idNhomTu;
         var tenNhomTu1 = body.tenNhomTu;
         var anhMinhHoa1 = body.anhMinhHoa;
@@ -122,10 +313,10 @@ app.post('/create_words', function (req, res) {
           anhMinhHoa: anhMinhHoa1
         });
 
-        nhomTu.save(function(err,createNhomTu){
-          if(err){
-            res.json({"success": 0,"message": "Could not add record: " + err})
-          }else{
+        nhomTu.save(function (err, createNhomTu) {
+          if (err) {
+            res.json({ "success": 0, "message": "Could not add record: " + err })
+          } else {
             res.json(createNhomTu)
           }
         })
@@ -141,7 +332,7 @@ app.get('/getAllNhomTu', function (req, res) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
-      res.send({NhomTu: nhomTus});
+      res.send({ NhomTu: nhomTus });
     }
   });
 });
@@ -154,7 +345,7 @@ app.delete('/delNhomTu/:idNhomTu', function (req, res) {
     if (err) {
       res.json({ "success": 0, "message": "Could not delete data from mlab" });
     } else {
-      res.json({ "success": 1, "message": "Delete succesfully"});
+      res.json({ "success": 1, "message": "Delete succesfully" });
     }
   });
 });
@@ -202,11 +393,11 @@ app.delete('/delNhomTu/:idNhomTu', function (req, res) {
 //Get All Tu trong nhom tu
 app.get('/getTuTrongNhom/:idNhomTu', function (req, res) {
   var idNhomTu = req.params.idNhomTu;
-  TuTrongNhomTu.find({idNhomTu: req.params.idNhomTu}, function (err, tuvung) {
+  TuTrongNhomTu.find({ idNhomTu: req.params.idNhomTu }, function (err, tuvung) {
     if (err) {
-      res.json({ success: 0, message: "Could not get data from mlab"});
+      res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
-      res.send({tuvung :tuvung});
+      res.send({ tuvung: tuvung });
     }
   });
 });
@@ -217,7 +408,7 @@ app.get('/getAllTu/', function (req, res) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" + err });
     } else {
-      res.send(tu); 
+      res.send(tu);
     }
   });
 });
