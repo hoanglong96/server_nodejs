@@ -394,7 +394,7 @@ app.get('/getDetailNghe/:idLuyenNghe', function (req, res) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
-      res.send({ LuyenNghe: detailNghe });
+      res.send({detailNghe});
     }
   });
 });
