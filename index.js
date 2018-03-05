@@ -1,3 +1,4 @@
+
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
@@ -11,6 +12,11 @@ var NewsFeed = require('./models/newsfeed');
 var NhomTu = require('./models/nhomTu');
 var TuTrongNhomTu = require('./models/TuVung')
 var MeoToeic = require('./models/meoToeic')
+var LuyenNghe = require('./models/luyenNgheMoiNgay')
+var DetailLuyenNghe = require('./models/detailLuyenNghe')
+var NguPhap = require('./models/nguPhapCoBan')
+var CachLam = require('./models/cachLamBaiThiToeic')
+var FunnyEnglish = require('./models/funnyEnglish')
 
 var arrWord = new Array();
 var arrNghia = new Array();
@@ -33,6 +39,7 @@ app.set('view engine', 'ejs');
 
 app.listen(app.get('port'), function () {
   console.log('Node app is running on port', app.get('port'));
+  //intervalObj
 });
 
 var fs = require('fs');
@@ -40,6 +47,58 @@ var array = fs.readFileSync('file.in').toString().split("\n");
 
 var request = require('request');
 var cheerio = require('cheerio');
+
+// const intervalObj = setInterval(() => {
+
+//   checkCount();
+// }, 1000);
+
+var checkCount = function(){
+  console.log("hihi")
+}
+
+//crawl funny english
+var urlFunnyEnglish = "http://www.mshoatoeic.com/funny-english-nl37";
+request(urlFunnyEnglish,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+
+  
+      var a = $('.main_content .clearfix .img_news a img').each(function(k,elems){
+          var b = $(this).attr('src')
+          var titleFunny = $(this).attr('alt')
+          
+          var funny = new FunnyEnglish({
+            id: k+1,
+            title : titleFunny,
+            image: b
+          })
+
+          // funny.save(function(err,postFunny){
+          //   if(err){
+          //     console.log('error')
+          //   }else{
+          //     console.log('success')
+          //   }
+          // })
+      })
+    //console.log(arr)
+
+  }else{
+    console.log('error')
+  }
+})
+
+//Get all funny English
+app.get('/funnyEnglish', function (req, res) {
+  FunnyEnglish.find(function (err, funny) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({ FunnyEnglish: funny });
+    }
+  });
+});
 
 //crawl nhom tu vung
 var urlNhomTuVung = "http://600tuvungtoeic.com/";
@@ -66,8 +125,6 @@ request(urlNhomTuVung, function (err, response, body) {
       arrLink.push(link)
     })
 
-    console.log(arrLink)
-
     var image = $('.gallery-item img').each(function (i, elem) {
       var imagelink = $(this).attr('src')
       arrImage.push(imagelink)
@@ -85,14 +142,14 @@ request(urlNhomTuVung, function (err, response, body) {
         anhMinhHoa: arrImage[i],
       })
 
-      nhomTu.save(function (err, taoNhomTu) {
-        //console.log("save " + title)
-        if (err) {
-          console.log("error")
-        } else {
-          console.log("success")
-        }
-      })
+      // nhomTu.save(function (err, taoNhomTu) {
+      //   //console.log("save " + title)
+      //   if (err) {
+      //     console.log("error")
+      //   } else {
+      //     console.log("success")
+      //   }
+      // })
     }
 
     var arrIdNhom = new Array();
@@ -127,7 +184,7 @@ request(urlNhomTuVung, function (err, response, body) {
 
 
           for (var i = 0; i < arrAudio.length; i++) {
-            console.log(index)
+            //console.log(index)
             var tuVung = new TuTrongNhomTu({
               id: index * 12 + i + 1,
               content: arrNoiDungTu[i],
@@ -136,13 +193,13 @@ request(urlNhomTuVung, function (err, response, body) {
               audio: arrAudio[i]
             })
 
-            tuVung.save(function (err, taoTuVung) {
-              if (err) {
-                console.log("error" + err)
-              } else {
-                console.log("success")
-              }
-            })
+            // tuVung.save(function (err, taoTuVung) {
+            //   if (err) {
+            //     console.log("error" + err)
+            //   } else {
+            //     console.log("success")
+            //   }
+            // })
           }
         } else {
           console.log('error')
@@ -156,17 +213,242 @@ request(urlNhomTuVung, function (err, response, body) {
   }
 })
 
+//crawl Cach lam bai thi toeic
+var urlCachLam = "https://www.toeicmoingay.com/#bai-giang";
+request(urlCachLam,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+     
+    var title = $('#tab2_Category .eachSectionTitle').text()
+    var desktopDevices = $('#tab2_Category .desktopDevices a').each(function(i,elem){
+      var desktopDevices1 = $(this).text()
+  
+    
+      var urlChitietNguPhap = $(this).attr('href');
+      request(urlChitietNguPhap,function(err,response,body){
+        var $ = cheerio.load(body)
+        var titleChitiet = $('.contentOuter iframe').attr('src').split(';')
+  
 
-//crawl data video ngu phap toeic
-var urlVideo = "https://www.youtube.com/watch?v=Iqs6PGoJzsQ&list=PL6B8DaHavsG1O4YagP4gY_bbrFI9zjMGz";
-request(urlVideo, function (err, response, body) {
+        var cachlam = new CachLam({
+          id: i+1,
+          title: desktopDevices1,
+          linkVideo: titleChitiet[0]
+        })
+
+        //   cachlam.save(function(err,taoCachLam){
+        //   //console.log("save " + title)
+        //   if(err){
+        //     console.log("error")
+        //   }else{
+        //     console.log(i + "success")
+        //   }
+        // })
+      })
+    })
+  }else{
+    console.log('error')
+  }
+})
+
+//Get All cach lam bai thi toeic
+app.get('/getCachLam', function (req, res) {
+  CachLam.find(function (err, cachlam) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({ CachLam: cachlam });
+    }
+  });
+});
+
+//crawl data luyen nghe moi ngay
+var urlLuyenNghe = "https://nghetienganhpro.com/category/luyen-nghe-moi-ngay/";
+request(urlLuyenNghe, function (err, response, body) {
   if (!err && response.statusCode == 200) {
-    var $ = cheerio.load(body);
+    var $ = cheerio.load(body)
+
+    var title = new Array()
+    var imageNghe = new Array()
+    var linkNghe = new Array()
+
+    //image
+    var imgNghe = $('.blog-item-wrap a img').each(function (i, elem) {
+      var ngheMoiNgay = $(this).attr('src')
+      //console.log(ngheMoiNgay)
+      imageNghe.push(ngheMoiNgay)
+    })
+    //Title,Link
+    var textTitle = $('.entry-title a').each(function (i, elem) {
+      var linkMoiNgay = $(this).attr('href')
+      var titleMoiNgay = $(this).text()
+      title.push(titleMoiNgay)
+      linkNghe.push(linkMoiNgay)
+      //console.log(titleMoiNgay)
+    })
+
+    //Content
+    var contentMoiNgay = new Array();
+
+    var textContent = $('.entry-content').each(function (i, elem) {
+      var content = $(this).text().split('\t')
+      for (var i = 0; i < content.length; i++) {
+        if (content[i] == '\n\n' || content[i] == '' || content[i] == 'Đọc tiếp\n\n') {
+
+        } else {
+          contentMoiNgay.push(content[i])
+        }
+      }
+      //console.log(content)
+    })
+
+    console.log(contentMoiNgay.length)
+
+    for (var i = 0; i < contentMoiNgay.length; i++) {
+      var luyennghe = new LuyenNghe({
+        id: i + 1,
+        title: title[i],
+        content: contentMoiNgay[i],
+        image: imageNghe[i]
+      });
+
+      // luyennghe.save(function (err, taoLuyenNghe) {
+      //   if (err) {
+      //     console.log('error')
+      //   } else {
+      //     console.log('success')
+      //   }
+      // })
+    }
 
   } else {
     console.log('error')
   }
 })
+
+//POST LUYEN NGHE
+app.post('/taoLuyenNghe', function (req, res) {
+  var body = req.body;
+  DetailLuyenNghe.findOne({ 'id': body.id }, function (err, detailNghe) {
+    if (err) {
+      res.json({ "success": 0, "message": "Could not add record: " + err });
+    } else {
+      if (detailNghe) {
+        detailNghe.save(function (err, chitiet) {
+          if (err) {
+            res.json({ "success": 0, "message": "Could not update record: " + err });
+          } else {
+            res.json({ chitiet })
+          }
+        });
+      } else {
+        var id1 = body.id;
+        var title1 = body.title;
+        var content1 = body.content;
+        var link1 = body.link;
+        var transcript1 = body.transcript;
+        var tuvung1 = body.tuvung
+        var image1 = body.image
+        var quantam1 = body.quantam
+
+        var detail = new DetailLuyenNghe({
+          id: id1,
+          title: title1,
+          content: content1,
+          link: link1,
+          transcript: transcript1,
+          tuvung: tuvung1,
+          image: image1,
+          quantam: quantam1
+        });
+
+        detail.save(function (err, chiteitNghe) {
+          if (err) {
+            res.json({ "success": 0, "message": "Could not add record: " + err })
+          } else {
+            res.json(chiteitNghe)
+          }
+        })
+      }
+    }
+  })
+
+})
+
+//Get All Detail Luyen nghe
+app.get('/getDetailNghe', function (req, res) {
+  DetailLuyenNghe.find(function (err, luyenNghe) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({ LuyenNghe: luyenNghe });
+    }
+  });
+});
+
+//Get Detail LuyenNghe
+app.get('/getDetailNghe/:id', function (req, res) {
+  var id = req.params.id;
+  DetailLuyenNghe.find({ id: req.params.id }, function (err, detailNghe) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({ LuyenNghe: detailNghe });
+    }
+  });
+});
+
+//crawl nguphap co ban
+var urlNguPhap = 'https://www.toeicmoingay.com/#bai-giang';
+request(urlNguPhap,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+
+    
+    var title = $('#tab1_Category .eachSectionTitle').text()
+    var desktopDevices = $('#tab1_Category .desktopDevices a').each(function(i,elem){
+      var desktopDevices1 = $(this).text()
+    
+      //afsaf
+      var urlChitietNguPhap = $(this).attr('href');
+      request(urlChitietNguPhap,function(err,response,body){
+        var $ = cheerio.load(body)
+        var titleChitiet = $('.contentOuter iframe').attr('src').split(';')
+
+        // var nguphap = new NguPhap({
+        //   id: i+1,
+        //   title: desktopDevices1,
+        //   linkVideo: titleChitiet[0]
+        // })
+
+        //   nguphap.save(function(err,taoNguPhap){
+        //   //console.log("save " + title)
+        //   if(err){
+        //     console.log("error")
+        //   }else{
+        //     console.log("success")
+        //   }
+        // })
+
+      })
+      //safsaf
+    })
+  }else{
+    console.log('error')
+  }
+})
+
+//get all luyen nghe
+app.get('/getNguPhap', function (req, res) {
+  NguPhap.find(function (err, nguphap) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" })
+    } else {
+      res.send({ NguPhap: nguphap })
+    }
+  })
+})
+
 
 //crawl data meo toeic
 var url = 'https://giasutoeic.com/meo-thi-toeic/';
@@ -254,6 +536,17 @@ app.get('/getMeoToeic', function (req, res) {
     }
   });
 });
+
+//get all luyen nghe
+app.get('/getLuyenNghe', function (req, res) {
+  LuyenNghe.find(function (err, luyenNghe) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" })
+    } else {
+      res.send({ LuyenNghe: luyenNghe })
+    }
+  })
+})
 
 //post tu 
 app.post('/taoTu', function (req, res) {
@@ -350,46 +643,6 @@ app.delete('/delNhomTu/:idNhomTu', function (req, res) {
   });
 });
 
-// //post tu 
-// app.post('/taoTu', function (req, res) {
-//   var body = req.body;
-//   TuTrongNhomTu.findOne({'idTu' : body.idTu}, function (err, tu) {
-//     if (err) {
-//       res.json({ "success": 0, "message": "Could not add record: " + err });
-//     } else {
-//       if (tu) {
-//         tu.save(function (err, tus) {
-//           if (err) {
-//             res.json({ "success": 0, "message": "Could not update record: " + err });
-//           } else {
-//             res.json({tus})
-//           }
-//         });
-//       }else{
-//         var idNhomTu1 = body.idNhomTu;
-//         var idTu1 = body.idTu;
-//         var word1 = body.word;
-//         var nghia1 = body.nghia;
-
-//         var TuVung = new TuTrongNhomTu({
-//           idNhomTu: idNhomTu1,
-//           idTu: idTu1,
-//           word: word1,
-//           nghia: nghia1
-//         });
-
-//         TuVung.save(function(err,taoTu){
-//           if(err){
-//             res.json({"success": 0,"message": "Could not add record: " + err})
-//           }else{
-//             res.json(taoTu)
-//           }
-//         })
-//       }
-//     }
-//   })
-// })
-
 //Get All Tu trong nhom tu
 app.get('/getTuTrongNhom/:idNhomTu', function (req, res) {
   var idNhomTu = req.params.idNhomTu;
@@ -412,7 +665,6 @@ app.get('/getAllTu/', function (req, res) {
     }
   });
 });
-
 
 //Create User
 app.post('/create_user', function (req, res) {
