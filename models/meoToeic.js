@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var meoToeicSchema = new Schema({
-    id: Number,
+    idMeoToeic: Number,
     name: String,
     des: String,
     image: String

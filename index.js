@@ -306,7 +306,7 @@ request(urlLuyenNghe, function (err, response, body) {
 
     for (var i = 0; i < contentMoiNgay.length; i++) {
       var luyennghe = new LuyenNghe({
-        id: i + 1,
+        idLuyenNghe: i + 1,
         title: title[i],
         content: contentMoiNgay[i],
         image: imageNghe[i]
@@ -329,7 +329,7 @@ request(urlLuyenNghe, function (err, response, body) {
 //POST LUYEN NGHE
 app.post('/taoLuyenNghe', function (req, res) {
   var body = req.body;
-  DetailLuyenNghe.findOne({ 'id': body.id }, function (err, detailNghe) {
+  DetailLuyenNghe.findOne({ 'idLuyenNghe': body.idLuyenNghe }, function (err, detailNghe) {
     if (err) {
       res.json({ "success": 0, "message": "Could not add record: " + err });
     } else {
@@ -342,7 +342,7 @@ app.post('/taoLuyenNghe', function (req, res) {
           }
         });
       } else {
-        var id1 = body.id;
+        var id1 = body.idLuyenNghe;
         var title1 = body.title;
         var content1 = body.content;
         var link1 = body.link;
@@ -352,7 +352,7 @@ app.post('/taoLuyenNghe', function (req, res) {
         var quantam1 = body.quantam
 
         var detail = new DetailLuyenNghe({
-          id: id1,
+          idLuyenNghe: id1,
           title: title1,
           content: content1,
           link: link1,
@@ -387,9 +387,10 @@ app.get('/getDetailNghe', function (req, res) {
 });
 
 //Get Detail LuyenNghe
-app.get('/getDetailNghe/:id', function (req, res) {
-  var id = req.params.id;
-  DetailLuyenNghe.find({ id: req.params.id }, function (err, detailNghe) {
+app.get('/getDetailNghe/:idLuyenNghe', function (req, res) {
+  var id = req.params.idLuyenNghe;
+  console.log(id)
+  DetailLuyenNghe.find({ idLuyenNghe: req.params.idLuyenNghe }, function (err, detailNghe) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
@@ -507,7 +508,7 @@ request(url, function (err, response, body) {
       desMeoToeic = des2[i];
 
       var meoToeic = new MeoToeic({
-        id: i + 1,
+        idMeoToeic: i + 1,
         name: titleMeoToeic,
         des: desMeoToeic,
         image: imageMeoToeic
