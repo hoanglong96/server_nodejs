@@ -17,6 +17,9 @@ var DetailLuyenNghe = require('./models/detailLuyenNghe')
 var NguPhap = require('./models/nguPhapCoBan')
 var CachLam = require('./models/cachLamBaiThiToeic')
 var FunnyEnglish = require('./models/funnyEnglish')
+var NguPhapSoCap = require('./models/NguPhapSoCap')
+var NguPhapTrungCap = require('./models/NguPhapTrungCap')
+var NguPhapCaoCap = require('./models/NguPhapCaoCap')
 
 var arrWord = new Array();
 var arrNghia = new Array();
@@ -399,6 +402,170 @@ app.get('/getDetailNghe/:idLuyenNghe', function (req, res) {
   });
 });
 
+//crawl ngữ pháp trình độ sơ cấp
+var urlSoCap = 'http://bktoeic.edu.vn/ngu-phap-tieng-anh/ngu-phap-tieng-anh-trinh-do-so-cap/page/1/';
+request(urlSoCap,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+    
+    var arrSoCapImage = new Array();
+    var arrSoCapTitle = new Array();
+    var arrSoCapDesc = new Array();
+
+    var imageSoCap = $('.posts-listing article a img').each(function(i,elem){
+      var image = $(this).attr('src')
+      arrSoCapImage.push(image)
+    })
+
+    var titleSoCap = $('.posts-listing article h1').each(function(i,elem){
+      var title = $(this).text()
+      arrSoCapTitle.push(title)
+    })
+
+    var descSoCap = $('.posts-listing article p').each(function(i,elem){
+      var desc = $(this).text()
+      arrSoCapDesc.push(desc)
+    })
+  }
+
+  for(var i=0;i<titleSoCap.length;i++){
+      var soCap = new NguPhapSoCap({
+          idSoCap: i+1,
+          title:arrSoCapTitle[i],
+          image:arrSoCapImage[i],
+          desc:arrSoCapDesc[i]
+      })
+
+      // soCap.save(function(err,taoSoCap){
+      //   if(err){
+      //     console.log('err')
+      //   }else{
+      //     console.log('success')
+      //   }
+      // })
+  }
+})
+
+//crawl ngữ pháp trình độ trung cấp
+var urlSoCap = 'http://bktoeic.edu.vn/ngu-phap-tieng-anh/ngu-phap-tieng-anh-trinh-do-trung-cap/';
+request(urlSoCap,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+    
+    var arrTrungCapImage = new Array();
+    var arrTrungCapTitle = new Array();
+    var arrTrungCapDesc = new Array();
+
+    var imageTrungCap = $('.posts-listing article a img').each(function(i,elem){
+      var image = $(this).attr('src')
+      arrTrungCapImage.push(image)
+    })
+
+    var titleTrungCap = $('.posts-listing article h1').each(function(i,elem){
+      var title = $(this).text()
+      arrTrungCapTitle.push(title)
+    })
+
+    var descTrungCap = $('.posts-listing article p').each(function(i,elem){
+      var desc = $(this).text()
+      arrTrungCapDesc.push(desc)
+    })
+  }
+
+  for(var i=0;i<titleTrungCap.length;i++){
+      var trungCap= new NguPhapTrungCap({
+          idTrungCap: i+1,
+          title:arrTrungCapTitle[i],
+          image:arrTrungCapImage[i],
+          desc:arrTrungCapDesc[i]
+      })
+
+      // trungCap.save(function(err,taoTrungCap){
+      //   if(err){
+      //     console.log('err')
+      //   }else{
+      //     console.log('success')
+      //   }
+      // })
+  }
+})
+
+//crawl ngữ pháp trình độ cap cấp
+var urlSoCap = 'http://bktoeic.edu.vn/ngu-phap-tieng-anh/ngu-phap-tieng-anh-trinh-do-nang-cao/';
+request(urlSoCap,function(err,response,body){
+  if(!err && response.statusCode == 200){
+    var $ = cheerio.load(body)
+    
+    var arrCaoCapImage = new Array();
+    var arrCaoCapTitle = new Array();
+    var arrCaoCapDesc = new Array();
+
+    var imageCaoCap = $('.posts-listing article a img').each(function(i,elem){
+      var image = $(this).attr('src')
+      arrCaoCapImage.push(image)
+    })
+
+    var titleCaoCap = $('.posts-listing article h1').each(function(i,elem){
+      var title = $(this).text()
+      arrCaoCapTitle.push(title)
+    })
+
+    var descCaoCap = $('.posts-listing article p').each(function(i,elem){
+      var desc = $(this).text()
+      arrCaoCapDesc.push(desc)
+    })
+  }
+
+  for(var i=0;i<titleCaoCap.length;i++){
+      var caoCap= new NguPhapCaoCap({
+          idCaoCap: i+1,
+          title:arrCaoCapTitle[i],
+          image:arrCaoCapImage[i],
+          desc:arrCaoCapDesc[i]
+      })
+
+      // caoCap.save(function(err,taoCaoCap){
+      //   if(err){
+      //     console.log('err')
+      //   }else{
+      //     console.log('success')
+      //   }
+      // })
+  }
+})
+
+//Get All So Cap
+app.get('/getSoCap', function (req, res) {
+  NguPhapSoCap.find(function (err, socap) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" })
+    } else {
+      res.send({ SoCap: socap })
+    }
+  })
+})
+
+//Get All TrungCap
+app.get('/getTrungCap',function(req,res){
+  NguPhapTrungCap.find(function(err,trungcap){
+    if(err){
+      res.json({success:0,message:"Could not get data from mlab"})
+    }else{
+      res.send({TrungCap: trungcap})
+    }
+  })
+})
+//Get All CaoCap
+app.get('/getCaoCap',function(req,res){
+  NguPhapCaoCap.find(function(err,caocap){
+    if(err){
+      res.json({success:0,message:"Could not get data from mlab"})
+    }else{
+      res.send({CaoCap: caocap})
+    }
+  })
+})
+
 //crawl nguphap co ban
 var urlNguPhap = 'https://www.toeicmoingay.com/#bai-giang';
 request(urlNguPhap,function(err,response,body){
@@ -443,11 +610,11 @@ request(urlNguPhap,function(err,response,body){
 app.get('/getNguPhap/:idNguPhap', function (req, res) {
   var id = req.params.idNguPhap;
   console.log(id)
-  NguPhap.find({ idNguPhap: req.params.idNguPhap }, function (err, nguPhap) {
+  NguPhap.find({ idNguPhap: req.params.idNguPhap }, function (err, detailNguPhap) {
     if (err) {
       res.json({ success: 0, message: "Could not get data from mlab" });
     } else {
-      res.send({nguPhap});
+      res.send({detailNguPhap});
     }
   });
 });
