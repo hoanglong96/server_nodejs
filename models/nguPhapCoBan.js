@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var nguPhapSchema = new Schema({
-    id: Number,
+    idNguPhap: Number,
     title: String,
     linkVideo: String,
   }

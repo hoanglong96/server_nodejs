@@ -416,11 +416,11 @@ request(urlNguPhap,function(err,response,body){
         var $ = cheerio.load(body)
         var titleChitiet = $('.contentOuter iframe').attr('src').split(';')
 
-        // var nguphap = new NguPhap({
-        //   id: i+1,
-        //   title: desktopDevices1,
-        //   linkVideo: titleChitiet[0]
-        // })
+        var nguphap = new NguPhap({
+          idNguPhap: i+1,
+          title: desktopDevices1,
+          linkVideo: titleChitiet[0]
+        })
 
         //   nguphap.save(function(err,taoNguPhap){
         //   //console.log("save " + title)
@@ -438,6 +438,19 @@ request(urlNguPhap,function(err,response,body){
     console.log('error')
   }
 })
+
+//Get Detail LuyenNghe
+app.get('/getNguPhap/:idNguPhap', function (req, res) {
+  var id = req.params.idNguPhap;
+  console.log(id)
+  NguPhap.find({ idNguPhap: req.params.idNguPhap }, function (err, nguPhap) {
+    if (err) {
+      res.json({ success: 0, message: "Could not get data from mlab" });
+    } else {
+      res.send({nguPhap});
+    }
+  });
+});
 
 //get all luyen nghe
 app.get('/getNguPhap', function (req, res) {
